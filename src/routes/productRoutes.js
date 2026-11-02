@@ -2,6 +2,7 @@ const router = require('express').Router();
 const c = require('../controllers/productController');
 
 router.get('/', c.getProducts);
+router.get('/barcode/:code', c.getByBarcode);
 router.get('/:id', c.getProduct);
 router.post('/', c.createProduct);
 router.put('/:id', c.updateProduct);

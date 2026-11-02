@@ -29,11 +29,11 @@ const productSchema = new mongoose.Schema(
       min: [0.01, 'Le prix doit être supérieur à 0'],
     },
     supplier: { type: String, required: [true, 'Le fournisseur est obligatoire'], trim: true },
+    barcode: { type: String, trim: true, unique: true, sparse: true },
   },
   { timestamps: true }
 );
 
-// Renvoie "id" au lieu de "_id" pour que l'app mobile reste simple
 productSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,

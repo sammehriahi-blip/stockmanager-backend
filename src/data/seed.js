@@ -3,7 +3,6 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const StockMovement = require('../models/StockMovement');
-
 const products = [
   { name: 'Clavier Logitech K120', reference: 'ELEC-001', category: 'Électronique', quantity: 25, price: 45, supplier: 'TechPro' },
   { name: 'Écran Samsung 24"', reference: 'ELEC-002', category: 'Électronique', quantity: 8, price: 320, supplier: 'TechPro' },
@@ -15,7 +14,6 @@ const products = [
   { name: 'Stylos bleus (boîte)', reference: 'FOUR-001', category: 'Fournitures', quantity: 2, price: 6, supplier: 'PaperCo' },
   { name: 'Classeurs A4', reference: 'FOUR-002', category: 'Fournitures', quantity: 40, price: 4.5, supplier: 'PaperCo' },
 ];
-
 (async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);

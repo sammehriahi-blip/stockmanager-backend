@@ -1,7 +1,5 @@
 const LOW_STOCK_THRESHOLD = 5;
 exports.LOW_STOCK_THRESHOLD = LOW_STOCK_THRESHOLD;
-
-// GET /api/dashboard
 exports.getDashboard = async (_req, res, next) => {
   try {
     const Product = require('../models/Product');

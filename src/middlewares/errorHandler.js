@@ -1,4 +1,3 @@
-// Transforme les erreurs techniques en messages clairs pour l'app mobile
 function notFound(req, res) {
   res.status(404).json({ message: `Route introuvable : ${req.method} ${req.originalUrl}` });
 }
@@ -12,7 +11,9 @@ function errorHandler(err, _req, res, _next) {
     return res.status(400).json({ message: 'Données invalides', errors });
   }
   if (err.code === 11000) {
-    return res.status(409).json({ message: 'Cette référence existe déjà', errors: { reference: 'Cette référence existe déjà' } });
+    const field = Object.keys(err.keyValue || {})[0] || 'reference';
+    const message = field === 'barcode' ? 'Ce code-barres est déjà utilisé' : 'Cette référence existe déjà';
+    return res.status(409).json({ message, errors: { [field]: message } });
   }
   if (err.name === 'CastError') {
     return res.status(400).json({ message: 'Identifiant invalide' });

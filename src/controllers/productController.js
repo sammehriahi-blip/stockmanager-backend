@@ -4,7 +4,14 @@ const { LOW_STOCK_THRESHOLD } = require('./dashboardController');
 
 const SORT_FIELDS = ['name', 'price', 'quantity', 'createdAt'];
 
-// GET /api/products?search=&category=&status=&minPrice=&maxPrice=&sort=price&order=desc
+function cleanBarcode(body) {
+  const data = { ...body };
+  if (typeof data.barcode === 'string') data.barcode = data.barcode.trim();
+  const removeBarcode = data.barcode === '' || data.barcode === null;
+  if (removeBarcode) delete data.barcode;
+  return { data, removeBarcode };
+}
+
 exports.getProducts = async (req, res, next) => {
   try {
     const { search, category, status, minPrice, maxPrice, sort = 'name', order = 'asc' } = req.query;
@@ -35,7 +42,16 @@ exports.getProducts = async (req, res, next) => {
   }
 };
 
-// GET /api/products/:id
+exports.getByBarcode = async (req, res, next) => {
+  try {
+    const product = await Product.findOne({ barcode: req.params.code.trim() });
+    if (!product) return res.status(404).json({ message: 'Aucun produit avec ce code-barres' });
+    res.json(product);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.getProduct = async (req, res, next) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -46,10 +62,10 @@ exports.getProduct = async (req, res, next) => {
   }
 };
 
-// POST /api/products
 exports.createProduct = async (req, res, next) => {
   try {
-    const product = await Product.create(req.body);
+    const { data } = cleanBarcode(req.body);
+    const product = await Product.create(data);
     await StockMovement.create({
       product: product._id,
       productName: product.name,
@@ -63,10 +79,11 @@ exports.createProduct = async (req, res, next) => {
   }
 };
 
-// PUT /api/products/:id
 exports.updateProduct = async (req, res, next) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+    const { data, removeBarcode } = cleanBarcode(req.body);
+    const update = removeBarcode ? { ...data, $unset: { barcode: 1 } } : data;
+    const product = await Product.findByIdAndUpdate(req.params.id, update, {
       new: true,
       runValidators: true,
     });
@@ -77,7 +94,6 @@ exports.updateProduct = async (req, res, next) => {
   }
 };
 
-// PATCH /api/products/:id/stock   body : { "delta": 1 } ou { "delta": -1 }
 exports.updateStock = async (req, res, next) => {
   try {
     const delta = Number(req.body.delta);
@@ -85,7 +101,6 @@ exports.updateStock = async (req, res, next) => {
       return res.status(400).json({ message: 'delta doit être un entier non nul' });
     }
 
-    // Mise à jour atomique : refuse si le stock deviendrait négatif
     const product = await Product.findOneAndUpdate(
       { _id: req.params.id, quantity: { $gte: -delta } },
       { $inc: { quantity: delta } },
@@ -112,7 +127,6 @@ exports.updateStock = async (req, res, next) => {
   }
 };
 
-// DELETE /api/products/:id
 exports.deleteProduct = async (req, res, next) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
