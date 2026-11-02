@@ -1,0 +1,154 @@
+{
+  "info": {
+    "name": "StockManager API",
+    "description": "Collection de tests de l'API REST StockManager (Node.js, Express, MongoDB).\n\nAvant de commencer : lancer l'API avec `npm run dev`. Exécuter d'abord « Créer un produit » : son identifiant est enregistré automatiquement dans la variable `productId`, utilisée par les autres requêtes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "productId", "value": "" },
+    { "key": "barcode", "value": "6191234567890" }
+  ],
+  "item": [
+    {
+      "name": "Santé de l'API",
+      "request": { "method": "GET", "url": "{{baseUrl}}" }
+    },
+    {
+      "name": "Produits",
+      "item": [
+        {
+          "name": "Lister les produits",
+          "request": { "method": "GET", "url": "{{baseUrl}}/products" }
+        },
+        {
+          "name": "Lister avec filtres (catégorie, statut, prix, tri)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/products?category=Électronique&status=disponible&minPrice=10&maxPrice=400&sort=price&order=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "category", "value": "Électronique" },
+                { "key": "status", "value": "disponible", "description": "disponible | bas | rupture" },
+                { "key": "minPrice", "value": "10" },
+                { "key": "maxPrice", "value": "400" },
+                { "key": "sort", "value": "price", "description": "name | price | quantity" },
+                { "key": "order", "value": "desc", "description": "asc | desc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rechercher par nom ou référence",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/products?search=clavier",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [{ "key": "search", "value": "clavier" }]
+            }
+          }
+        },
+        {
+          "name": "Créer un produit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "if (body.id) pm.collectionVariables.set('productId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Casque audio Bluetooth\",\n  \"reference\": \"ELEC-TEST-01\",\n  \"category\": \"Électronique\",\n  \"quantity\": 12,\n  \"price\": 89.9,\n  \"supplier\": \"TechPro\",\n  \"barcode\": \"{{barcode}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Créer un produit invalide (erreurs de validation)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('Statut 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Produit invalide\",\n  \"reference\": \"TEST-ERR\",\n  \"category\": \"Électronique\",\n  \"quantity\": -5,\n  \"price\": 0,\n  \"supplier\": \"TechPro\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Détail d'un produit",
+          "request": { "method": "GET", "url": "{{baseUrl}}/products/{{productId}}" }
+        },
+        {
+          "name": "Rechercher par code-barres",
+          "request": { "method": "GET", "url": "{{baseUrl}}/products/barcode/{{barcode}}" }
+        },
+        {
+          "name": "Modifier un produit",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/products/{{productId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Casque audio Bluetooth Pro\",\n  \"reference\": \"ELEC-TEST-01\",\n  \"category\": \"Électronique\",\n  \"quantity\": 12,\n  \"price\": 99.9,\n  \"supplier\": \"TechPro\",\n  \"barcode\": \"{{barcode}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Ajouter du stock (+1)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/products/{{productId}}/stock",
+            "body": { "mode": "raw", "raw": "{\n  \"delta\": 1\n}" }
+          }
+        },
+        {
+          "name": "Retirer du stock (-1)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/products/{{productId}}/stock",
+            "body": { "mode": "raw", "raw": "{\n  \"delta\": -1\n}" }
+          }
+        },
+        {
+          "name": "Supprimer un produit",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/products/{{productId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Tableau de bord",
+      "request": { "method": "GET", "url": "{{baseUrl}}/dashboard" }
+    },
+    {
+      "name": "Historique des mouvements",
+      "request": { "method": "GET", "url": "{{baseUrl}}/movements" }
+    }
+  ]
+}
